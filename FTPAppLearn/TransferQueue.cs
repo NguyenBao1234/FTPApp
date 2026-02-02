@@ -30,8 +30,9 @@ public class TransferQueue
             queue.Length = queue.FS.Length;
             return queue;
         }
-        catch
+        catch (Exception e)
         {
+            MessageBox.Show(e.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             return null;
         }
     }
@@ -53,8 +54,9 @@ public class TransferQueue
             queue.FS.SetLength(inLength);
             return queue;
         }
-        catch
+        catch (Exception e)
         {
+            MessageBox.Show(e.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             return null;
         }
     }
@@ -68,7 +70,7 @@ public class TransferQueue
     public string FileName;
     public QueueType Type;
 
-    public TransferClient Client;
+    public TransferClient? Client;
     public Thread Thread;
     public FileStream FS;
 
@@ -98,6 +100,7 @@ public class TransferQueue
 
     public void Close()
     {
+        if(Client == null)  return;
         Client.Transfers.Remove(ID);
         Client = null;
         bRunning = false;
@@ -116,7 +119,7 @@ public class TransferQueue
         }
     }
 
-    private static void TransferProcess(object o)
+    private static void TransferProcess(object? o)
     {
         TransferQueue queue = (TransferQueue)o;
         while (queue.bRunning && queue.Index < queue.Length)
@@ -143,7 +146,9 @@ public class TransferQueue
                     queue.LastProgress = queue.Progress;
                     queue.Client.CallProgressChanged(queue);
                 }
+                Thread.Sleep(10);
             }
         }
+        queue.Close();
     }
 }

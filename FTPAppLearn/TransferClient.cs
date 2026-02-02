@@ -52,6 +52,7 @@ public class TransferClient
         catch(Exception e)
         {
             error = e.Message;
+            MessageBox.Show(e.Message,"Connect Callback", MessageBoxButtons.OK,MessageBoxIcon.Error);
         }
         _connectCallback(this, error);
     }
@@ -88,7 +89,7 @@ public class TransferClient
         if(Disconnected != null) Disconnected(this, EventArgs.Empty);
     }
 
-    public void UploadTransferQueued(string inFileName)
+    public void QueueTransfer(string inFileName)
     {
         try
         {
@@ -105,11 +106,15 @@ public class TransferClient
         }
         catch (Exception e)
         {
+            MessageBox.Show(e.Message, "Queue Transfer Error", MessageBoxButtons.OK,MessageBoxIcon.Error);
             Console.WriteLine(e);
             throw;
         }
     }
 
+    /// <summary>
+    /// Luu file bang Write BW
+    /// </summary>
     public void StartTransfer(TransferQueue queue)
     {
         var pw = new PacketWriter();
@@ -219,6 +224,7 @@ public class TransferClient
         }
         catch (Exception e)
         {
+            MessageBox.Show(e.Message, "Run Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
             Console.WriteLine(e);
             Close();
         }
@@ -226,18 +232,28 @@ public class TransferClient
 
     private void ReceiveCallback(IAsyncResult ar)
     {
-        int receiveByteAmount = _baseSocket.EndReceive(ar);
-        if (receiveByteAmount > 4)
+        try
         {
-            _baseSocket.Receive(_buffer, 0, 4, SocketFlags.None);
-            int size = BitConverter.ToInt32(_buffer, 0);
-            int read = _baseSocket.Receive(_buffer, 0, size, SocketFlags.None);
-            while (read < size)
+            int receiveByteAmount = _baseSocket.EndReceive(ar);
+            if (receiveByteAmount > 4)
             {
-                read += _baseSocket.Receive(_buffer, read, size - read, SocketFlags.None);
+                _baseSocket.Receive(_buffer, 0, 4, SocketFlags.None);
+                int size = BitConverter.ToInt32(_buffer, 0);
+                int read = _baseSocket.Receive(_buffer, 0, size, SocketFlags.None);
+                while (read < size)
+                {
+                    read += _baseSocket.Receive(_buffer, read, size - read, SocketFlags.None);
+                }
+                Process();
             }
-
-            //process();
+            Run();
+        }
+        catch (Exception e)
+        {
+            MessageBox.Show(e.Message, "Receive Callback", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            Close();
+            Console.WriteLine(e);
+            throw;
         }
     }
 
